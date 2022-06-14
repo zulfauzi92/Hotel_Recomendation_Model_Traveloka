@@ -22,7 +22,7 @@ from keras.models import load_model
 from keras.preprocessing import image
 
 # Flask utils
-from flask import Flask, redirect, url_for, request, render_template
+from flask import Flask, redirect, url_for, request, render_template, jsonify
 import requests
 
 # df_user = pd.read_csv('https://raw.githubusercontent.com/zulfauzi92/Hotel_Recomendation_Model_Traveloka/main/Eksplorasi%20Data/Main%20Dataset/csv_final//Final_Dataset_User_ML.csv', index_col=[0])
@@ -63,11 +63,12 @@ def model_predict(array, model):
 
 @app.route('/', methods=['GET','POST'])
 def main():
-    
+    # menerima input json
+    request_data = request.get_json()
     # mengubah string hotel_id ke integer
-    arr_hotel = convertIntegerfromList(hotel_input)
+    arr_hotel = convertIntegerfromList(request_data['hotel_input'])
     # membuat array user sejumlah hotel
-    arr_user = np.full(shape=len(arr_hotel), fill_value=convertIntegerfromList(user_input), dtype=np.int)
+    arr_user = np.full(shape=len(arr_hotel), fill_value=convertIntegerfromList(request_data['user_input']), dtype=np.int)
 
     preds = model_predict([tf.constant(arr_user),tf.constant(arr_hotel)], model)
     predictions  = np.array([a[0] for a in preds])
@@ -78,8 +79,13 @@ def main():
         arr_output.append(arr_hotel[item])
 
     output = convertListfromInteger('H', arr_output)
+
+    dict_output = {
+        'recommended_id':output
+    }
     
-    return render_template('index.html', prediction = str(output))
+    
+    return jsonify(dict_output)
     
       
 if __name__ == '__main__':
