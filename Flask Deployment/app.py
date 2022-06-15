@@ -13,6 +13,7 @@ import glob
 import re
 import numpy as np
 import pandas as pd
+from ast import literal_eval
 
 import tensorflow as tf
 
@@ -29,6 +30,9 @@ import requests
 # df_hotel_ML = pd.read_csv('https://raw.githubusercontent.com/zulfauzi92/Hotel_Recomendation_Model_Traveloka/main/Eksplorasi%20Data/Main%20Dataset/csv_final//Final_Dataset_Hotel_ML.csv', index_col=[0])
 # df_hotel_nonML = pd.read_csv('https://raw.githubusercontent.com/zulfauzi92/Hotel_Recomendation_Model_Traveloka/main/Eksplorasi%20Data/Main%20Dataset/csv_final//Final_Dataset_Hotel_nonML.csv', index_col=[0])
 # df_review = pd.read_csv('https://raw.githubusercontent.com/zulfauzi92/Hotel_Recomendation_Model_Traveloka/main/Eksplorasi%20Data/Main%20Dataset/csv_final//Final_Dataset_Review.csv', index_col=[0])
+df_hotel_ML_transformed = pd.read_csv('https://raw.githubusercontent.com/zulfauzi92/Hotel_Recomendation_Model_Traveloka/main/Recomendation%20Model/ML_user_data_transformed.csv', index_col=[0])
+
+df_hotel_ML_transformed['Item_id'] = df_hotel_ML_transformed['Item_id'].apply(lambda x: str(np.array(literal_eval(x))[0]))
 
 # Define a flask app
 app = Flask(__name__,template_folder='templates')
@@ -42,8 +46,8 @@ model.make_predict_function()
 print('Model loaded. Check http://127.0.0.1:3000/')
 
 # Contoh Input dari BE
-hotel_input = ['H00100','H00023','H00024','H00012','H00001','H00110','H00330','H00069','H00090']
-user_input = ['U09081']
+user_input = 'U09081'
+
 
 def convertListfromInteger(identifier, list_int):
     converted = []
@@ -64,11 +68,12 @@ def model_predict(array, model):
 @app.route('/', methods=['GET','POST'])
 def main():
     # menerima input json
-    request_data = request.get_json()
+    # request_data = request.get_json() # line di comment untuk testing
+    
     # mengubah string hotel_id ke integer
-    arr_hotel = convertIntegerfromList(request_data['hotel_input'])
+    arr_hotel = convertIntegerfromList(df_hotel_ML_transformed['Item_id'].values)
     # membuat array user sejumlah hotel
-    arr_user = np.full(shape=len(arr_hotel), fill_value=convertIntegerfromList(request_data['user_input']), dtype=np.int)
+    arr_user = np.full(shape=len(arr_hotel), fill_value=int(user_input[1:]), dtype=np.int64)
 
     preds = model_predict([tf.constant(arr_user),tf.constant(arr_hotel)], model)
     predictions  = np.array([a[0] for a in preds])
@@ -79,13 +84,13 @@ def main():
         arr_output.append(arr_hotel[item])
 
     output = convertListfromInteger('H', arr_output)
-
+    # print(len(output))
     dict_output = {
         'recommended_id':output
     }
     
-    
-    return jsonify(dict_output)
+    # return jsonify(dict_output)
+    return render_template('index.html', prediction=output)
     
       
 if __name__ == '__main__':
