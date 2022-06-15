@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="author" content="colorlib.com">
+    <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet" />
+<!--    <link href="css/main.css" rel="stylesheet" /> -->
+    <link href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  </head>
+  <body>
+    <div class="s01">
+      <form class="p-3 text-center" action='/', method="POST" >
+        <fieldset>
+          <legend>Welcome to Traveloka Prototype App</legend>
+        </fieldset>
+        <div class="inner-form">
+          <div class="input-field first-wrap">
+            <input id="search" type="text" placeholder="What are you looking for?" />
+          </div>
+          <div class="input-field third-wrap">
+            <button class="btn-search" type="button">Predict</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="transbox">
+        <p class="text-center">Hasil Prediksi: {{prediction}}</p>
+    </div>
+  </body>
+</html>
