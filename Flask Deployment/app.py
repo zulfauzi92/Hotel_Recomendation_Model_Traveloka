@@ -14,6 +14,7 @@ import re
 import numpy as np
 import pandas as pd
 from ast import literal_eval
+from sklearn.preprocessing import LabelEncoder
 
 import tensorflow as tf
 
@@ -32,7 +33,12 @@ import requests
 # df_review = pd.read_csv('https://raw.githubusercontent.com/zulfauzi92/Hotel_Recomendation_Model_Traveloka/main/Eksplorasi%20Data/Main%20Dataset/csv_final//Final_Dataset_Review.csv', index_col=[0])
 df_hotel_ML_transformed = pd.read_csv('https://raw.githubusercontent.com/zulfauzi92/Hotel_Recomendation_Model_Traveloka/main/Recomendation%20Model/ML_user_data_transformed.csv', index_col=[0])
 
-df_hotel_ML_transformed['Item_id'] = df_hotel_ML_transformed['Item_id'].apply(lambda x: str(np.array(literal_eval(x))[0]))
+# Create label encoder for translating value for model inputs
+user_enc = LabelEncoder()
+user_enc.fit(df_hotel_ML_transformed['User_id'].values)
+
+item_enc = LabelEncoder()
+item_enc.fit(df_hotel_ML_transformed['Item_id'].values)
 
 # Define a flask app
 app = Flask(__name__,template_folder='templates')
@@ -46,8 +52,7 @@ model.make_predict_function()
 print('Model loaded. Check http://127.0.0.1:3000/')
 
 # Contoh Input dari BE
-user_input = 'U09081'
-
+user_input = 'U000001'
 
 def convertListfromInteger(identifier, list_int):
     converted = []
@@ -70,14 +75,15 @@ def main():
     # menerima input json
     # request_data = request.get_json() # line di comment untuk testing
     
-    # mengubah string hotel_id ke integer
-    arr_hotel = convertIntegerfromList(df_hotel_ML_transformed['Item_id'].values)
-    # membuat array user sejumlah hotel
-    arr_user = np.full(shape=len(arr_hotel), fill_value=int(user_input[1:]), dtype=np.int64)
+    # mengubah item id unique menjadi array hotel untuk input model 
+    arr_hotel = item_enc.transform(df_hotel_ML_transformed['Item_id'].unique())
+    # membuat array user sejumlah hotel berdasarkan input dari BE
+    arr_user = np.full(shape=len(arr_hotel), fill_value=(int(user_input[1:]) - 1), dtype=np.int64)
 
     preds = model_predict([tf.constant(arr_user),tf.constant(arr_hotel)], model)
     predictions  = np.array([a[0] for a in preds])
-    recommended_item_ids = (-predictions).argsort()[:len(arr_hotel)]
+    # get 100 best recommendation
+    recommended_item_ids = (-predictions).argsort()[:100]
     
     arr_output = []
     for item in recommended_item_ids:
